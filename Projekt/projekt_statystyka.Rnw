@@ -1,0 +1,294 @@
+\documentclass{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[cp1250]{inputenc}
+\usepackage{amssymb}
+\usepackage{color}
+\usepackage{amsmath}
+\usepackage{Sweave}
+\usepackage{enumerate}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage[a4paper, total={6in, 8.1in}]{geometry}
+
+\title{Analiza wybranych róznic miedzy panstwami swiata}
+\author{\textbf{405054, Jakub Radek}, sroda $12^{50}$\\ 
+\textit{AGH, Wydzial, Informatyki Elektroniki i Telekomunikacji}\\
+\textit{Rachunek prawdopodobienstwa i statystyka 2021/2022}}
+\date{Kraków, \today}
+
+
+\begin{document}
+\SweaveOpts{concordance=TRUE}
+\maketitle
+
+\textit{Ja, nizej podpisany(na) wlasnorecznym podpisem deklaruje, ze przygotowalem(lam) przedstawiony do oceny projekt samodzielnie i zadna jego czesc nie jest kopia pracy innej osoby.}
+\begin{flushright}
+{............................................}
+\end{flushright}
+
+\section{Streszczenie raportu}
+Raport powstal w oparciu o analize danych dotyczacych diamentów. Analizowane dane to carat, depth, table oraz price.
+\section{Opis danych}
+Dane do projektu pochodza ze strony \href{url}{\texttt{https://www.kaggle.com/shivam2503/diamonds}}. Dotycza one ceny i wymiarów 53940 diamentów.
+
+Zmienne analizowane w projekcie:
+\begin{itemize}
+  \item carat - Masa diamentu w karatach
+  \item depth - Procentowa glebokosc diamentu, stosunek wysokosci do sredniej szerokosci
+  \item table - Szerokosc szczytu diamentu w stosunku do najwiekszej szerokosci diamentu
+  \item price - Cena diamentu w USD
+\end{itemize}
+\newpage
+
+\section{Analiza danych}
+
+\subsection{Przygotowanie danych do analizy}
+
+W projekcie wykorzystane zostaly nastepujace biblioteki:
+
+<<>>=
+library(ggplot2)
+library(ggcorrplot)
+library(moments)
+library(nortest)
+library(grid)
+library(gridExtra)
+library(hrbrthemes)
+@
+
+Prace rozpoczalem od wczytania danych do RStudio, po czym wybralem kolumny do analizy 
+i zapisalem je do osobnego pliku o nazwie "dataSet".
+
+<<>>=
+filePath <- "diamonds.csv"
+data <- read.csv(filePath)
+dataSet <- as.data.frame(cbind(data$carat, data$depth, data$table, data$price))
+colnames(dataSet)[1] <- "carat"
+colnames(dataSet)[2] <- "depth"
+colnames(dataSet)[3] <- "table"
+colnames(dataSet)[4] <- "price"
+attach(dataSet)
+write.csv(dataSet, "./dataSet.csv", row.names = TRUE)
+@
+
+\subsection{Wydobywanie podstawowych informacji z danych}
+
+Dla kazdej ze zmiennych wygenerowalem histogram oraz boxplot.
+Wyznaczylem nastepnie wartosc minimalna i maksymalna, srednia,
+mediane, wariancje, odchylenie standardowe, skosnosc i kurtoze.
+Dokonalem potem analizy zaleznosci pomiedzy zmiennymi sprawdzajac
+kowariancje i korelacje miedzy nimi.
+
+\newpage
+
+\subsection{Zmienna 'carat'}
+
+\SweaveOpts{width=30, height=15}
+<<label=carat_graphs, fig=TRUE, echo=FALSE>>=
+histogram <- ggplot(dataSet, aes(x = carat), xlab="carat") + 
+  geom_histogram(binwidth=0.15, color="black", fill="green") + 
+  theme_ipsum(base_family = 'sans') + 
+  labs(title="Histogram 'carat'")
+boxplot <- ggplot(dataSet, aes(x = carat), xlab="carat") + 
+  geom_boxplot(color="black", fill="green", alpha=0.5, outlier.size=5) + 
+  theme_ipsum(base_family = 'sans') + 
+  labs(title="Boxplot 'carat'")
+grid.arrange(histogram, boxplot, nrow=1)
+@
+
+<<echo=FALSE>>=
+row1 <- data.frame(Minimum=min(carat), Maksimum=max(carat),
+                   Srednia=mean(carat), Mediana=median(carat),
+                   Wariancja=var(carat), Odch_Stn.=sd(carat), 
+                   Skosnosc=skewness(carat), Kurtoza=kurtosis(carat))
+print(row1, row.names = FALSE)
+@
+
+Na podstawie uzyskanych wykresów mozemy zaobserwowac, ze wiekszosc analizowanych
+diamentów jest o mniejszej wadze (ilosci karatów).
+Na podstawie dodatniej wartosci odchylenia standardowego wiemy ze rozklad jest
+prawostronnie skosny a na podstawie dodatniej wartosci kurtozy wiemy ze rozklad
+jest leptokurtyczny.
+
+
+\subsection{Zmienna 'depth'}
+
+\SweaveOpts{width=30, height=15}
+<<label=depth_graphs, fig=TRUE, echo=FALSE>>=
+histogram <- ggplot(dataSet, aes(x = depth), xlab="depth") + 
+  geom_histogram(binwidth=1.2, color="black", fill="red") + 
+  theme_ipsum(base_family = 'sans') + 
+  labs(title="Histogram 'depth'")
+boxplot <- ggplot(dataSet, aes(x = depth), xlab="depth") + 
+  geom_boxplot(color="black", fill="red", alpha=0.5, outlier.size=5) + 
+  theme_ipsum(base_family = 'sans') + 
+  labs(title="Boxplot 'depth'")
+grid.arrange(histogram, boxplot, nrow=1)
+@
+
+<<echo=FALSE>>=
+row1 <- data.frame(Minimum=min(depth), Maksimum=max(depth),
+                   Srednia=mean(depth), Mediana=median(depth),
+                   Wariancja=var(depth), Odch_Stn.=sd(depth), 
+                   Skosnosc=skewness(depth), Kurtoza=kurtosis(depth))
+print(row1, row.names = FALSE)
+@
+
+Na podstawie uzyskanych wykresów mozemy zaobserwowac ze wartosci depth skupiaja sie pomiedzy okolo 55 do okolo 70.
+Na podstawie ujemnej wartosci odchylenia standardowego wiemy ze rozklad jest
+lewostronnie skosny a na podstawie dodatniej wartosci kurtozy wiemy ze rozklad
+jest leptokurtyczny.
+
+\newpage
+
+\subsection{Zmienna 'table'}
+
+\SweaveOpts{width=30, height=15}
+<<label=table_graphs, fig=TRUE, echo=FALSE>>=
+histogram <- ggplot(dataSet, aes(x = table), xlab="table") + 
+  geom_histogram(binwidth=1.5, color="black", fill="blue") + 
+  theme_ipsum(base_family = 'sans') + 
+  labs(title="Histogram 'table'")
+boxplot <- ggplot(dataSet, aes(x = table), xlab="table") + 
+  geom_boxplot(color="black", fill="blue", alpha=0.5, outlier.size=5) + 
+  theme_ipsum(base_family = 'sans') + 
+  labs(title="Boxplot 'table'")
+grid.arrange(histogram, boxplot, nrow=1)
+@
+<<echo=FALSE>>=
+row1 <- data.frame(Minimum=min(table), Maksimum=max(table),
+                   Srednia=mean(table), Mediana=median(table),
+                   Wariancja=var(table), Odch_Stn.=sd(table), 
+                   Skosnosc=skewness(table), Kurtoza=kurtosis(table))
+print(row1, row.names = FALSE)
+@
+
+
+Na podstawie uzyskanego histogramu mozemy zaobserwowac ze wartosci table 
+skupiaja sie pomiedzy powyzej 50 do okolo 65.
+Na podstawie dodatniej wartosci odchylenia standardowego wiemy ze rozklad jest
+prawostronnie skosny a na podstawie dodatniej wartosci kurtozy wiemy ze rozklad
+jest leptokurtyczny.
+
+\subsection{Zmienna 'price'}
+
+\SweaveOpts{width=30, height=15}
+<<label=price_graphs, fig=TRUE, echo=FALSE>>=
+histogram <- ggplot(dataSet, aes(x = price), xlab="price") + 
+  geom_histogram(binwidth=550, color="black", fill="yellow") + 
+  theme_ipsum(base_family = 'sans') + 
+  labs(title="Histogram 'price'")
+boxplot <- ggplot(dataSet, aes(x = price), xlab="price") + 
+  geom_boxplot(color="black", fill="yellow", alpha=0.5, outlier.size=5) + 
+  theme_ipsum(base_family = 'sans') + 
+  labs(title="Boxplot 'price'")
+grid.arrange(histogram, boxplot, nrow=1)
+@
+
+<<echo=FALSE>>=
+row1 <- data.frame(Minimum=min(price), Maksimum=max(price),
+                   Srednia=mean(price), Mediana=median(price),
+                   Wariancja=var(price), Odch_Stn.=sd(price), 
+                   Skosnosc=skewness(price), Kurtoza=kurtosis(price))
+print(row1, row.names = FALSE)
+@
+
+
+
+Na podstawie uzyskanego histogramu mozemy zaobserwowac, ze ilosc diamentów jest okolo odwrotnie proporcjonalna do ich wartosci w USD.
+Na podstawie dodatniej wartosci odchylenia standardowego wiemy ze rozklad jest
+prawostronnie skosny a na podstawie dodatniej wartosci kurtozy wiemy ze rozklad
+jest leptokurtyczny.
+
+\newpage
+
+\section{Analiza zaleznosci pomiedzy zmiennymi}
+
+\subsection{Kowawariancje i korelacje wystepujace miedzy wszystkimi zmiennymi}
+
+<<>>=
+cov(dataSet[,c(1,2,3,4)])
+cor(dataSet[,c(1,2,3,4)])
+@
+
+<<label=corrplot, fig=TRUE>>=
+ggcorrplot(cor(dataSet[,c(1,2,3,4)]))
+@
+
+Na podstawie uzyskanych danych mozna zaobserwowac bardzo silna korelacje miedzy
+zmiennymi 'price' i 'carat' oraz zauwazalne korelacje miedzy zmiennymi 'carat'
+i 'table' oraz 'price' i 'table' oraz ujemna korelacja miedzy 'table' i 'depth'.
+
+\newpage
+
+\subsection{Badanie zaleznosci 'price' i 'carat'}
+
+<<label=price_carat_plot, fig=TRUE>>=
+plotle <- ggplot(dataSet, aes(x = price, y = carat), xlab="price", 
+  ylab="carat") + geom_point() + 
+  geom_smooth(formula = y ~ x, method = "lm") + 
+  theme_ipsum(base_family = 'sans') + 
+  labs(title="Zaleznosc 'price' od 'carat'")
+plotle
+@
+
+Na podstawie uzyskanego wykresu widac ze zaleznosc liniowa jest dosc zauwazalna,
+dokonam wiec analizy regresji liniowej dla tej zaleznosci.
+
+<<>>=
+reg <- lm(price ~ carat)
+summary(reg)
+@
+
+Z wysokiego wskaznika \textbf{$R^{2}$} widzimy, ze model dopasowuje sie do
+danych w okolo 84 procentach, co daje nam dosc duzy stopien podobienstwa.
+
+\newpage
+
+\subsection{Zaleznosc 'depth' i 'table'}
+
+<<label=depth_table_plot, fig=TRUE>>=
+plotle <- ggplot(dataSet, aes(x = depth, y = table), xlab="depth", 
+  ylab="table") + geom_point() + 
+  geom_smooth(formula = y ~ x, method = "lm") + 
+  theme_ipsum(base_family = 'sans') + 
+  labs(title="Zaleznosc 'depth' od 'table'")
+plotle
+@
+
+\subsection{Zaleznosc 'carat' i 'table'}
+
+<<label=carat_table_plot, fig=TRUE>>=
+plotle <- ggplot(dataSet, aes(x = carat, y = table), xlab="carat", 
+  ylab="table") + geom_point() + 
+  geom_smooth(formula = y ~ x, method = "lm") + 
+  theme_ipsum(base_family = 'sans') + 
+  labs(title="Zaleznosc 'carat' od 'table'")
+plotle
+@
+
+\newpage
+
+\subsection{Zaleznosc 'price' i 'table'}
+
+<<label=price_table_plot, fig=TRUE>>=
+plotle <- ggplot(dataSet, aes(x = price, y = table), xlab="price", 
+  ylab="table") + geom_point() + 
+  geom_smooth(formula = y ~ x, method = "lm") + 
+  theme_ipsum(base_family = 'sans') + 
+  labs(title="Zaleznosc 'price' od 'table'")
+plotle
+@
+
+\section{Wnioski}
+Wnioski plynace z przeprowadzonej analizy, sa nastepujace:
+\begin{itemize}
+\item Pomiedzy wartoscia 'carat' a wartoscia 'price', czyli waga i cena diamentu
+istnieje bardzo silna dodatnia korelacja oraz wysoki stopien dopasowania, co
+ sugeruje nam istnienie zaleznosci liniowej, wiekszy diament osiaga wieksza cene.
+\item Istnieja zauwazalne dodatnie korelacje pomiedzy wartosciami 'carat' i 'table' oraz 'price' i 'table'.
+\item Istnieje zauwazalna ujemna korelacja pomiedzy wartosciami 'depth' i 'table'.
+\end{itemize}
+
+\end{document}
